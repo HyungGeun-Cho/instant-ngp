@@ -2719,6 +2719,11 @@ void Testbed::prepare_next_camera_path_frame() {
 }
 
 void Testbed::train_and_render(bool skip_rendering) {
+
+	// tlog::info()
+	// 		<< "Entered train_and_render"
+	// 		;
+
 	if (m_train) {
 		train(m_training_batch_size);
 	}
@@ -3660,6 +3665,14 @@ void Testbed::reset_network(bool clear_density_grid) {
 
 		float desired_resolution = 2048.0f; // Desired resolution of the finest hashgrid level over the unit cube
 		if (m_testbed_mode == ETestbedMode::Image) {
+			if (max(m_image.resolution) == 0) {
+				// m_image.resolution.x = config["snapshot"]["image_resolution_x"];
+				// m_image.resolution.y = config["snapshot"]["image_resolution_y "];
+
+				m_image.resolution.x = 1024;
+				m_image.resolution.y = 1024;
+			}
+
 			desired_resolution = max(m_image.resolution) / 2.0f;
 		} else if (m_testbed_mode == ETestbedMode::Volume) {
 			desired_resolution = m_volume.world2index_scale;
@@ -3668,9 +3681,27 @@ void Testbed::reset_network(bool clear_density_grid) {
 		// Automatically determine suitable per_level_scale
 		m_per_level_scale = encoding_config.value("per_level_scale", 0.0f);
 		if (m_per_level_scale <= 0.0f && m_n_levels > 1) {
-			m_per_level_scale = std::exp(std::log(desired_resolution * (float)m_nerf.training.dataset.aabb_scale / (float)m_base_grid_resolution) / (m_n_levels-1));
+			if (m_testbed_mode == ETestbedMode::Image) {
+
+				tlog::info()
+					<< "Entered!"
+					;
+
+				m_per_level_scale = std::exp(std::log(desired_resolution / (float)m_base_grid_resolution) / (m_n_levels-1));
+			} else{
+				m_per_level_scale = std::exp(std::log(desired_resolution * (float)m_nerf.training.dataset.aabb_scale / (float)m_base_grid_resolution) / (m_n_levels-1));
+			}
+			
 			encoding_config["per_level_scale"] = m_per_level_scale;
 		}
+
+		tlog::info()
+			<< "GridEncoding Calculation: "
+			<< " m_image.resolution=" << max(m_image.resolution)
+			<< " desired_resolution=" << desired_resolution
+			<< " m_base_grid_resolution=" << m_base_grid_resolution
+			<< " m_n_levels=" << m_n_levels
+			;
 
 		tlog::info()
 			<< "GridEncoding: "
@@ -4710,6 +4741,15 @@ void Testbed::save_snapshot(const fs::path& path, bool include_optimizer_state, 
 		snapshot["nerf"]["cam_rot_offset"] = m_nerf.training.cam_rot_offset;
 		snapshot["nerf"]["extra_dims_opt"] = m_nerf.training.extra_dims_opt;
 	}
+
+	// if (m_testbed_mode == ETestbedMode::Image) {
+	// 	if (m_image.resolution.x > 0) {  // Check if x is uninitialized, zero, or error-indicating
+    //     	snapshot["image_resolution_x"] = m_image.resolution.x;  // Use actual value
+    // 	}
+	// 	if (m_image.resolution.y > 0) {  // Check if x is uninitialized, zero, or error-indicating
+    //     	snapshot["image_resolution_y"] = m_image.resolution.y;  // Use actual value
+    // 	} 
+	// }
 
 	snapshot["training_step"] = m_training_step;
 	snapshot["loss"] = m_loss_scalar.val();

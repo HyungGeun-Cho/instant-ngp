@@ -283,6 +283,9 @@ void Testbed::render_image(
 	const Foveation& foveation,
 	int visualized_dimension
 ) {
+	tlog::info() << "Entered render_image";
+
+
 	auto res = render_buffer.resolution;
 
 	// Make sure we have enough memory reserved to render at the requested resolution
@@ -290,6 +293,8 @@ void Testbed::render_image(
 	uint32_t n_elements = next_multiple((uint32_t)n_pixels, BATCH_SIZE_GRANULARITY);
 	m_image.render_coords.enlarge(n_elements);
 	m_image.render_out.enlarge(n_elements);
+
+	tlog::info() << "1111111";
 
 	float plane_z = m_slice_plane_z + m_scale;
 	float aspect = (float)m_image.resolution.y / (float)m_image.resolution.x;
@@ -314,6 +319,8 @@ void Testbed::render_image(
 		render_buffer.hidden_area_mask ? render_buffer.hidden_area_mask->const_view() : Buffer2DView<const uint8_t>{}
 	);
 
+	tlog::info() << "2222222";
+
 	// Obtain colors for each 2D coord
 	if (m_image.type == EDataType::Float) {
 		linear_kernel(eval_image_kernel_and_snap<float, 3>, 0, stream,
@@ -337,14 +344,21 @@ void Testbed::render_image(
 		);
 	}
 
+
+	tlog::info() << "33333333";
+
 	if (!m_render_ground_truth) {
 		if (visualized_dimension >= 0) {
+			tlog::info() << "44444444";
 			GPUMatrix<float> positions_matrix((float*)m_image.render_coords.data(), 2, n_elements);
 			GPUMatrix<float> colors_matrix((float*)m_image.render_out.data(), 3, n_elements);
 			m_network->visualize_activation(stream, m_visualized_layer, visualized_dimension, positions_matrix, colors_matrix);
 		} else {
+			tlog::info() << "55555555";
 			GPUMatrix<float> positions_matrix((float*)m_image.render_coords.data(), 2, n_elements);
+			tlog::info() << "66666666";
 			GPUMatrix<float> colors_matrix((float*)m_image.render_out.data(), 3, n_elements);
+			tlog::info() << "77777777";
 			m_network->inference(stream, positions_matrix, colors_matrix);
 		}
 	}

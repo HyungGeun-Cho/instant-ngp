@@ -93,6 +93,7 @@ if __name__ == "__main__":
 		scene_info = get_scene(file)
 		if scene_info:
 			file = os.path.join(scene_info["data_dir"], scene_info["dataset"])
+		# breakpoint()
 		testbed.load_file(file)
 
 	if args.scene:
